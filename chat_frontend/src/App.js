@@ -58,7 +58,7 @@ function App() {
 
     try {
       // --- OpenAI API setup ---
-      // Try to fetch from env variable. React requires REACT_APP_ prefix for process.env variables.
+      // Uses REACT_APP_OPENAI_API_KEY from process.env.
       const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
 
       // Prepare messages as required by OpenAI API
@@ -66,15 +66,9 @@ function App() {
         role: msg.role, content: msg.content
       }));
 
-      // CORS: For security, the API key should NOT be sent from client.
-      // Option 1: Direct (works ONLY if CORS is not an issue and you know what you're doing)
-      // Option 2 (recommended): Proxy through backend. The code below includes a placeholder.
-
-      // TODO: Replace the URL with your backend proxy endpoint if CORS/security restrictions block client-side access.
-      // For now, if the API key exists, attempt a direct call for local/dev ONLY.
       let data;
       if (apiKey) {
-        // Direct integration (unsafe for production - for demo/localdev only)
+        // Direct integration using OpenAI API Key from environment.
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -93,21 +87,10 @@ function App() {
         }
         data = await response.json();
       } else {
-        // Backend/proxy placeholder example:
-        /**
-         * TODO: Set up a backend endpoint/api/proxy to make the OpenAI call securely.
-         * Example below assumes POST /api/chat-completion with { messages }
-         *
-         * const response = await fetch('/api/chat-completion', {
-         *   method: 'POST',
-         *   headers: { 'Content-Type': 'application/json' },
-         *   body: JSON.stringify({ messages })
-         * });
-         * data = await response.json();
-         * 
-         * Instructions: Backend should read the OpenAI API key from its env and not expose it to client.
-         */
-        throw new Error('OpenAI API key not found in environment. Provide REACT_APP_OPENAI_API_KEY or setup a backend proxy.');
+        // If no API key, show error message.
+        setError('OpenAI API key is missing in the environment. Please ensure REACT_APP_OPENAI_API_KEY is set.');
+        setIsSending(false);
+        return;
       }
 
       if (data && data.choices && data.choices.length) {
@@ -119,7 +102,6 @@ function App() {
       } else {
         throw new Error('No chat response received from OpenAI');
       }
-
     } catch (err) {
       setError(
         err.message?.toString() ||
